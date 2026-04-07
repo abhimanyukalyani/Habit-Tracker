@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goal Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f9f9f7;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --border-mid: rgba(0,0,0,0.18);
+    --text: #1a1a18;
+    --muted: #6b6b66;
+    --hint: #9e9e98;
+    --sub-bg: #f2f1ee;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --gym: #1D9E75;
+    --study: #378ADD;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413;
+      --surface: #1e1e1c;
+      --border: rgba(255,255,255,0.1);
+      --border-mid: rgba(255,255,255,0.2);
+      --text: #f0efe9;
+      --muted: #9e9e98;
+      --hint: #6b6b66;
+      --sub-bg: #2a2a28;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 680px; margin: 0 auto; }
+
+  header { margin-bottom: 2rem; }
+  header h1 { font-size: 22px; font-weight: 500; color: var(--text); }
+  header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .section {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .sec-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 16px; font-weight: 500; color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .accent { width: 3px; height: 18px; border-radius: 1.5px; flex-shrink: 0; }
+
+  .sub-label {
+    font-size: 11px; color: var(--hint);
+    letter-spacing: 0.04em; margin-bottom: 6px;
+  }
+
+  .day-label-row { display: flex; gap: 4px; margin: 0 0 4px 118px; }
+  .day-lbl {
+    width: 28px; text-align: center;
+    font-size: 10px; color: var(--hint);
+  }
+  .day-lbl.today { color: var(--text); font-weight: 500; }
+
+  .habit-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .habit-name {
+    font-size: 13px; color: var(--text);
+    width: 110px; flex-shrink: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .day-checks { display: flex; gap: 4px; }
+  .day-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 0.5px solid var(--border);
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: transparent;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .day-btn.today-ring { border: 1.5px solid var(--border-mid); }
+  .day-btn.checked-gym  { background: var(--gym);   border-color: var(--gym);   color: #fff; }
+  .day-btn.checked-study{ background: var(--study); border-color: var(--study); color: #fff; }
+
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 12px 0; }
+
+  .ms-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .ms-name { flex: 1; font-size: 13px; color: var(--text); min-width: 0; }
+  .ms-date { font-size: 11px; color: var(--hint); white-space: nowrap; flex-shrink: 0; }
+  .ms-bar-wrap {
+    width: 72px; height: 4px;
+    background: var(--sub-bg); border-radius: 2px;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .ms-bar-fill { height: 100%; border-radius: 2px; }
+  .ms-pct { font-size: 11px; color: var(--muted); min-width: 30px; text-align: right; flex-shrink: 0; }
+
+  input[type="range"] {
+    width: 52px; flex-shrink: 0;
+    accent-color: var(--muted);
+  }
+
+  .add-btn {
+    font-size: 12px; color: var(--muted);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 3px 10px; background: transparent;
+    cursor: pointer; margin-top: 4px;
+  }
+  .add-btn:hover { background: var(--sub-bg); }
+
+  .add-form { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+  .add-form input[type="text"] {
+    font-size: 12px; padding: 4px 8px; height: 28px;
+    border: 0.5px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    background: var(--sub-bg); color: var(--text);
+    outline: none;
+  }
+  .add-form input[type="text"]:focus { border-color: var(--border-mid); }
+  .save-btn {
+    font-size: 12px; padding: 3px 10px; height: 28px;
+    border: 0.5px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    background: transparent; color: var(--text);
+    cursor: pointer;
+  }
+  .save-btn:hover { background: var(--sub-bg); }
+
+  .note {
+    font-size: 12px; color: var(--hint);
+    text-align: center; margin-top: 1.5rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Goal Tracker</h1>
+    <p id="week-label"></p>
+  </header>
+  <div id="app"></div>
+  <p class="note">Progress resets on browser refresh. Check items daily.</p>
+</div>
+
+<script>
+const DAY_LTRS = ['M','T','W','T','F','S','S'];
+
+function getWeek() {
+  const t = new Date();
+  const day = t.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const mon = new Date(t);
+  mon.setDate(t.getDate() + diff);
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(mon);
+    d.setDate(mon.getDate() + i);
+    return d;
+  });
+}
+
+const WEEK = getWeek();
+const TODAYSTR = new Date().toDateString();
+const dk = d => d.toISOString().slice(0,10);
+const isToday = d => d.toDateString() === TODAYSTR;
+
+const fmt = d => d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+document.getElementById('week-label').textContent =
+  'Week of ' + fmt(WEEK[0]) + ' – ' + fmt(WEEK[6]);
+
+let S = {
+  gym: {
+    color: 'var(--gym)', cc: 'checked-gym',
+    habits: [
+      { id:'g1', name:'Gym session', checked:{} },
+      { id:'g2', name:'Tennis', checked:{} },
+    ],
+    milestones: [
+      { id:'gm1', name:'5-day gym streak', date:'Apr 30', pct:20 },
+      { id:'gm2', name:'Win a tennis set', date:'May 31', pct:10 },
+    ],
+    hf:false, mf:false
+  },
+  study: {
+    color: 'var(--study)', cc: 'checked-study',
+    habits: [
+      { id:'s1', name:'CFA L2 study', checked:{} },
+      { id:'s2', name:'ACCA study', checked:{} },
+    ],
+    milestones: [
+      { id:'sm1', name:'CFA L2: Ethics module', date:'May 2026', pct:0 },
+      { id:'sm2', name:'ACCA SBR exam', date:'Jun 2026', pct:5 },
+      { id:'sm3', name:'ACCA APM exam', date:'Dec 2026', pct:0 },
+      { id:'sm4', name:'CFA Level 2 exam', date:'Nov 2026', pct:0 },
+    ],
+    hf:false, mf:false
+  }
+};
+
+window.toggleHabit = (key,hid,dateKey) => {
+  const h = S[key].habits.find(x=>x.id===hid);
+  h.checked[dateKey] = !h.checked[dateKey];
+  render();
+};
+window.updatePct = (key,mid,val) => {
+  S[key].milestones.find(x=>x.id===mid).pct = +val;
+  const bar = document.getElementById('bar-'+mid);
+  const pct = document.getElementById('pct-'+mid);
+  if(bar) bar.style.width = val+'%';
+  if(pct) pct.textContent = val+'%';
+};
+window.showHF  = key => { S[key].hf=true;  render(); };
+window.showMF  = key => { S[key].mf=true;  render(); };
+window.cancelHF = key => { S[key].hf=false; render(); };
+window.cancelMF = key => { S[key].mf=false; render(); };
+window.addHabit = key => {
+  const inp = document.getElementById(key+'-hi');
+  if(!inp?.value.trim()) return;
+  S[key].habits.push({ id:key+Date.now(), name:inp.value.trim(), checked:{} });
+  S[key].hf=false; render();
+};
+window.addMs = key => {
+  const n = document.getElementById(key+'-mn');
+  const d = document.getElementById(key+'-md');
+  if(!n?.value.trim()) return;
+  S[key].milestones.push({ id:key+'m'+Date.now(), name:n.value.trim(), date:d?.value.trim()||'', pct:0 });
+  S[key].mf=false; render();
+};
+
+function renderSection(key, title) {
+  const s = S[key];
+  const dayLabels = WEEK.map((d,i) =>
+    `<div class="day-lbl ${isToday(d)?'today':''}">${DAY_LTRS[i]}</div>`
+  ).join('');
+  const habits = s.habits.map(h =>
+    `<div class="habit-row">
+      <span class="habit-name" title="${h.name}">${h.name}</span>
+      <div class="day-checks">${WEEK.map(d => {
+        const k=dk(d), chk=!!h.checked[k];
+        return `<button class="day-btn ${chk?s.cc:''} ${isToday(d)?'today-ring':''}"
+          onclick="toggleHabit('${key}','${h.id}','${k}')">${chk?'&#10003;':''}</button>`;
+      }).join('')}</div>
+    </div>`
+  ).join('');
+  const milestones = s.milestones.map(m =>
+    `<div class="ms-row">
+      <span class="ms-name">${m.name}</span>
+      <span class="ms-date">${m.date}</span>
+      <div class="ms-bar-wrap">
+        <div class="ms-bar-fill" id="bar-${m.id}" style="width:${m.pct}%;background:${s.color};"></div>
+      </div>
+      <span class="ms-pct" id="pct-${m.id}">${m.pct}%</span>
+      <input type="range" min="0" max="100" value="${m.pct}" step="1"
+        oninput="updatePct('${key}','${m.id}',this.value)">
+    </div>`
+  ).join('');
+  const hFormHtml = s.hf
+    ? `<div class="add-form">
+        <input type="text" id="${key}-hi" placeholder="Habit name" />
+        <button class="save-btn" onclick="addHabit('${key}')">Add</button>
+        <button class="save-btn" onclick="cancelHF('${key}')">Cancel</button>
+       </div>`
+    : `<button class="add-btn" onclick="showHF('${key}')">+ add habit</button>`;
+  const mFormHtml = s.mf
+    ? `<div class="add-form">
+        <input type="text" id="${key}-mn" placeholder="Milestone name" style="flex:1;min-width:140px;" />
+        <input type="text" id="${key}-md" placeholder="Target date" style="width:90px;" />
+        <button class="save-btn" onclick="addMs('${key}')">Add</button>
+        <button class="save-btn" onclick="cancelMF('${key}')">Cancel</button>
+       </div>`
+    : `<button class="add-btn" onclick="showMF('${key}')">+ add milestone</button>`;
+
+  return `<div class="section">
+    <div class="sec-title">
+      <div class="accent" style="background:${s.color};"></div>
+      ${title}
+    </div>
+    <div class="sub-label">Weekly habits</div>
+    <div class="day-label-row">${dayLabels}</div>
+    ${habits}${hFormHtml}
+    <hr class="divider" />
+    <div class="sub-label">Milestones</div>
+    ${milestones}${mFormHtml}
+  </div>`;
+}
+
+function render() {
+  document.getElementById('app').innerHTML =
+    renderSection('gym','Gym / Tennis') +
+    renderSection('study','Studies');
+}
+render();
+</script>
+</body>
+</html>
